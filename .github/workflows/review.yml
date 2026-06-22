@@ -24,7 +24,7 @@ on:
 
 jobs:
   review:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest #TODO MODIFICAR  POR SELF RUNNER HOST
     permissions:
       id-token: write
       contents: read
