@@ -56,6 +56,13 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sandbox/package-lock.json
+
       - name: Validate requested agent
         shell: bash
         run: |
@@ -64,6 +71,22 @@ jobs:
             echo "Requested agent '${{ inputs.agent }}' does not exist at $agent_file" >&2
             exit 1
           fi
+
+      - name: Install sandbox dependencies
+        shell: bash
+        run: npm ci
+        working-directory: sandbox
+
+      - name: Install Playwright browser for MCP
+        shell: bash
+        run: npx -y playwright@latest install --with-deps chromium
+
+      - name: Start sandbox app for Playwright MCP
+        shell: bash
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 3000 > ../sandbox-dev.log 2>&1 &
+          npx -y wait-on@latest http://127.0.0.1:3000
+        working-directory: sandbox
 
       - name: Create PR diff
         run: |
@@ -86,6 +109,7 @@ jobs:
           Reglas operativas:
           - Usa `pr-diff.patch` y `pr-diff-stat.txt` como fuente principal.
           - Ignora cambios fuera de `sandbox/`.
+          - Si necesitas validar comportamiento visual, la app del sandbox esta disponible en `http://127.0.0.1:3000` y el MCP de Playwright queda habilitado por `opencode.json`.
           - Devuelve solo el comentario final en Markdown, sin firma de herramienta, sin branding y sin texto adicional fuera del comentario.
           EOF
 
