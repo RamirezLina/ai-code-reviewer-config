@@ -1,0 +1,25 @@
+{
+  "review": {
+    "mode": "pull-request-only",
+    "scope": "changed-files",
+    "failOnMissingAgent": true,
+    "allowAgentFallback": false,
+    "commentFormat": {
+      "summaryHeading": "## OpenCode Review Summary",
+      "findingsHeading": "## Findings",
+      "emptyReviewMessage": "No critical issues were found."
+    },
+    "priorities": [
+      "security",
+      "privacy",
+      "sensitive-data-exposure",
+      "authorization-checks",
+      "input-validation",
+      "unsafe-logging",
+      "error-handling",
+      "bugs-edge-cases",
+      "tests",
+      "maintainability"
+    ]
+  }
+}
