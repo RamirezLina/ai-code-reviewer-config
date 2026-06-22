@@ -1,0 +1,8 @@
+ .github/agents/react-reviewer.agent.md | 109 +++++++++++++++++++++++++++++++++
+ .github/copilot-instructions.md        |   7 +++
+ .github/workflows/opencode.yml         |  33 ----------
+ .github/workflows/review.yml           |  82 +++++++++++++++++++++----
+ .opencode/agents/react-reviewer.md     |  91 +++++++++++++++++++++++++++
+ AGENTS.md                              |  35 +++++++++++
+ opencode.json                          |  28 +++++++++
+ 7 files changed, 340 insertions(+), 45 deletions(-)
