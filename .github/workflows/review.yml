@@ -59,7 +59,7 @@ jobs:
       - name: Validate requested agent
         shell: bash
         run: |
-          agent_file=".github/agents/${{ inputs.agent }}.agent.md"
+          agent_file=".opencode/agents/${{ inputs.agent }}.agent.md"
           if [ ! -f "$agent_file" ]; then
             echo "Requested agent '${{ inputs.agent }}' does not exist at $agent_file" >&2
             exit 1
@@ -75,7 +75,7 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
-          model: opencode/kimi-k2.6
+          model: opencode-go/deepseek-v4-flash
           agent: ${{ inputs.agent }}
           prompt: |
             Review Pull Request #${{ inputs.pr_number }}.
