@@ -1,8 +1,9 @@
 name: opencode-review
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+  # pull_request:
+  #   types: [opened, synchronize, reopened, ready_for_review]
+    workflow_dispatch:
 
 jobs:
   review:
@@ -21,7 +22,6 @@ jobs:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
           model: opencode/kimi-k2.6
-          use_github_token: true
           prompt: |
             Review this pull request:
             - Check for code quality issues
