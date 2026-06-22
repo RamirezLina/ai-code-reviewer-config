@@ -28,8 +28,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
+      issues: write
 
     steps:
       - name: Get PR metadata
@@ -70,18 +70,53 @@ jobs:
           git diff --stat ${{ steps.pr.outputs.base_sha }}...${{ steps.pr.outputs.head_sha }} > pr-diff-stat.txt
           git diff ${{ steps.pr.outputs.base_sha }}...${{ steps.pr.outputs.head_sha }} > pr-diff.patch
 
-      - name: Run OpenCode review
-        uses: anomalyco/opencode/github@latest
+      - name: Build review prompt
+        shell: bash
+        run: |
+          cat <<'EOF' > review-prompt.md
+          Revisa unicamente los cambios del Pull Request #${{ inputs.pr_number }} dentro de `sandbox/`.
+
+          Contexto del PR:
+          - Numero: ${{ inputs.pr_number }}
+          - Titulo: ${{ steps.pr.outputs.title }}
+
+          Instruccion adicional del usuario:
+          ${{ inputs.prompt }}
+
+          Reglas operativas:
+          - Usa `pr-diff.patch` y `pr-diff-stat.txt` como fuente principal.
+          - Ignora cambios fuera de `sandbox/`.
+          - Devuelve solo el comentario final en Markdown, sin firma de herramienta, sin branding y sin texto adicional fuera del comentario.
+          EOF
+
+      - name: Generate review comment
+        id: review
+        shell: bash
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: |
+          PROMPT=$(cat review-prompt.md)
+          npx -y opencode-ai@latest run \
+            --agent "${{ inputs.agent }}" \
+            --model "opencode-go/deepseek-v4-flash" \
+            --dir "." \
+            "$PROMPT" > review-comment.md
+
+      - name: Publish review comment to requested PR
+        uses: actions/github-script@v7
         with:
-          model: opencode-go/deepseek-v4-flash
-          agent: ${{ inputs.agent }}
-          prompt: |
-            Review Pull Request #${{ inputs.pr_number }}.
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('review-comment.md', 'utf8').trim();
 
-            PR title:
-            ${{ steps.pr.outputs.title }}
+            if (!body) {
+              core.setFailed('The review comment is empty.');
+              return;
+            }
 
-            User instruction:
-            ${{ inputs.prompt }}
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number("${{ inputs.pr_number }}"),
+              body,
+            });
