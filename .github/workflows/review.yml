@@ -1,29 +1,80 @@
-name: opencode-review
+name: pr-review
+
 
 on:
-  # pull_request:
-  #   types: [opened, synchronize, reopened, ready_for_review]
-    workflow_dispatch:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Número del Pull Request a revisar"
+        required: true
+        type: number
+
+      agent:
+        description: "Agente de OpenCode a usar"
+        required: true
+        default: "react-reviewer" ##TODO Definir otro default
+        type: choice
+        options:
+          - react-reviewer
+          - plan
+
+      prompt:
+        description: "Instrucción adicional para la revisión"
+        required: true
+        default: "Review this pull request according to the guidelines defined by the agent."
+        type: string
 
 jobs:
   review:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest #TODO MODIFICAR  POR SELF RUNNER HOST
     permissions:
       id-token: write
       contents: read
       pull-requests: read
       issues: read
+
     steps:
-      - uses: actions/checkout@v6
+      - name: Get PR metadata
+        id: pr
+        uses: actions/github-script@v7
         with:
+          script: |
+            const prNumber = Number("${{ inputs.pr_number }}");
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            core.setOutput("base_sha", pr.base.sha);
+            core.setOutput("head_sha", pr.head.sha);
+            core.setOutput("title", pr.title);
+
+      - name: Checkout PR code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.pr.outputs.head_sha }}
+          fetch-depth: 0
           persist-credentials: false
-      - uses: anomalyco/opencode/github@latest
+
+      - name: Create PR diff
+        run: |
+          git diff --stat ${{ steps.pr.outputs.base_sha }}...${{ steps.pr.outputs.head_sha }} > pr-diff-stat.txt
+          git diff ${{ steps.pr.outputs.base_sha }}...${{ steps.pr.outputs.head_sha }} > pr-diff.patch
+
+      - name: Run OpenCode review
+        uses: anomalyco/opencode/github@latest
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
           model: opencode/kimi-k2.6
+          agent: ${{ inputs.agent }}
           prompt: |
-            Review this pull request:
-            - Check for code quality issues
-            - Look for potential bugs
-            - Suggest improvements
+            Review Pull Request #${{ inputs.pr_number }}.
+
+            PR title:
+            ${{ steps.pr.outputs.title }}
+
+            User instruction:
+            ${{ inputs.prompt }}
