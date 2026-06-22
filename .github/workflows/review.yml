@@ -10,14 +10,14 @@ on:
         type: number
 
       agent:
-        description: "Agente de OpenCode a usar"
+        description: "Agente a usar"
         required: true
         type: choice
         options:
           - react-reviewer
 
       prompt:
-        description: "Instrucción adicional para la revisión"
+        description: "Prompt para la revisión"
         required: true
         default: "Review this pull request according to the guidelines defined by the agent."
         type: string
@@ -59,7 +59,7 @@ jobs:
       - name: Validate requested agent
         shell: bash
         run: |
-          agent_file=".opencode/agents/${{ inputs.agent }}.agent.md"
+          agent_file=".opencode/agents/${{ inputs.agent }}.md"
           if [ ! -f "$agent_file" ]; then
             echo "Requested agent '${{ inputs.agent }}' does not exist at $agent_file" >&2
             exit 1
