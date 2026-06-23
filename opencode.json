@@ -21,7 +21,7 @@
         "-y",
         "@playwright/mcp@latest",
         "--browser",
-        "chromium",
+        "chrome",
         "--headless",
         "--no-sandbox",
         "--allowed-origins",

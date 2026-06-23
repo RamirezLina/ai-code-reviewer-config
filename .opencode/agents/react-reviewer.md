@@ -92,6 +92,9 @@ Guardrails:
 
 Return concise Markdown as a pull request comment using exactly this structure:
 
+- Output only the final PR comment.
+- Do not include thoughts, planning notes, tool traces, XML tags, system reminders, or any text before `## Resumen de revision` or after the final section.
+
 ## Resumen de revision
 
 - Brief description of the reviewed change only inside `sandbox/`.
@@ -100,13 +103,21 @@ Return concise Markdown as a pull request comment using exactly this structure:
 
 ## Hallazgos
 
-For each finding include:
+For each finding, use one bullet and expose these fields clearly:
 
-- Severity: High, Medium, or Low.
-- File or area.
-- Problem.
-- Risk.
-- Suggested fix.
+- Severidad: Alta, Media o Baja.
+- Archivo: ruta y linea si aplica.
+- Problema: que incumplimiento o defecto se observa.
+- Riesgo: por que importa o que efecto puede causar.
+- Solucion sugerida: cambio concreto recomendado.
+
+Example shape:
+
+- Severidad: Alta.
+  Archivo: `sandbox/src/example.tsx:10`
+  Problema: ...
+  Riesgo: ...
+  Solucion sugerida: ...
 
 If there are no relevant findings, say that no critical issues were found.
 
