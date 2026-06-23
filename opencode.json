@@ -20,6 +20,10 @@
         "npx",
         "-y",
         "@playwright/mcp@latest",
+        "--browser",
+        "chromium",
+        "--headless",
+        "--no-sandbox",
         "--allowed-origins",
         "127.0.0.1:3000;localhost:3000"
       ],

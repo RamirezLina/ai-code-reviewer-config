@@ -43,6 +43,7 @@ Review scope restrictions:
 - Limit findings and suggestions to changes made inside `sandbox/`.
 - Ignore changes outside `sandbox/` unless a minimal reference is strictly necessary to validate a changed line inside `sandbox/`.
 - Suggest fixes only for code that is part of the reviewed changes in `sandbox/`.
+- Do not mention, summarize, praise, or critique infrastructure, workflow, agent, RAG, ADR, README, or any other changes outside `sandbox/` in the final PR comment.
 
 Embedded review rules for the sandbox:
 
@@ -93,9 +94,9 @@ Return concise Markdown as a pull request comment using exactly this structure:
 
 ## Resumen de revision
 
-- Brief description of the overall change in the PR.
-- Number of modified files or documents reviewed.
-- Overall areas that deserve attention.
+- Brief description of the reviewed change only inside `sandbox/`.
+- Number of modified files reviewed inside `sandbox/`.
+- Overall areas inside `sandbox/` that deserve attention.
 
 ## Hallazgos
 
@@ -108,5 +109,14 @@ For each finding include:
 - Suggested fix.
 
 If there are no relevant findings, say that no critical issues were found.
+
+## Correcciones positivas
+
+If the PR includes clear improvements inside `sandbox/` that now comply with a rule or convention, include a compact Markdown table with exactly these columns:
+
+| Archivo | Descripcion de la correccion | Lineamiento que cumple ahora |
+| --- | --- | --- |
+
+List only concrete, evidence-based positive corrections found in `sandbox/`. Keep each row short. If there are no such corrections, omit this section.
 
 Be precise and evidence-based. Prefer fewer, stronger findings over long generic lists. Keep the tone professional and actionable. Mention the affected file or area in every finding.
