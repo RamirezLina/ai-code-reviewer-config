@@ -24,7 +24,9 @@ on:
 
 jobs:
   review:
-    runs-on: ubuntu-latest #TODO MODIFICAR  POR SELF RUNNER HOST
+    runs-on:
+      - self-hosted
+      - linux
     permissions:
       id-token: write
       contents: read
@@ -50,7 +52,7 @@ jobs:
             core.setOutput("title", pr.title);
 
       - name: Checkout PR code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr.outputs.head_sha }}
           fetch-depth: 0
@@ -62,6 +64,25 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: sandbox/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Configure local RAG paths
+        shell: bash
+        run: |
+          echo "RAG_SOURCE_DIR=${GITHUB_WORKSPACE}/sandbox/knowledge" >> "$GITHUB_ENV"
+          echo "RAG_INDEX_DIR=${HOME}/.cache/ai-code-reviewer-config/rag-index" >> "$GITHUB_ENV"
+          echo "UV_CACHE_DIR=${HOME}/.cache/uv" >> "$GITHUB_ENV"
+          mkdir -p "${HOME}/.cache/ai-code-reviewer-config/rag-index"
+          uv venv .venv
+          echo "VIRTUAL_ENV=${GITHUB_WORKSPACE}/.venv" >> "$GITHUB_ENV"
+          echo "${GITHUB_WORKSPACE}/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Validate requested agent
         shell: bash
@@ -77,9 +98,21 @@ jobs:
         run: npm ci
         working-directory: sandbox
 
+      - name: Install RAG dependencies
+        shell: bash
+        run: |
+          uv pip install -r mcp/rag/requirements.txt
+
+      - name: Build or reuse knowledge index
+        shell: bash
+        run: |
+          python mcp/rag/index_knowledge.py \
+            --source-dir "$RAG_SOURCE_DIR" \
+            --index-dir "$RAG_INDEX_DIR"
+
       - name: Install Playwright browser for MCP
         shell: bash
-        run: npx -y playwright@latest install --with-deps chromium
+        run: npx -y playwright@latest install chromium
 
       - name: Start sandbox app for Playwright MCP
         shell: bash
@@ -109,6 +142,7 @@ jobs:
           Reglas operativas:
           - Usa `pr-diff.patch` y `pr-diff-stat.txt` como fuente principal.
           - Ignora cambios fuera de `sandbox/`.
+          - Usa el MCP de conocimiento para sustentar o ampliar la evaluacion de `R1` a `R8`, ADRs, accesibilidad y reutilizacion de componentes cuando aplique.
           - Si necesitas validar comportamiento visual, la app del sandbox esta disponible en `http://127.0.0.1:3000` y el MCP de Playwright queda habilitado por `opencode.json`.
           - Devuelve solo el comentario final en Markdown, sin firma de herramienta, sin branding y sin texto adicional fuera del comentario.
           EOF
