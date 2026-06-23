@@ -85,7 +85,7 @@ Do not assume the workflow prompt replaces the base rules. Combine the workflow 
 
 Prioritize findings in this order when relevant to the changed code:
 
-For React and TypeScript changes, use the configured knowledge MCP as the main retrieval source for frontend conventions, accessibility guidance, ADRs, and component catalog information. Use it not only for guidance beyond `R1` to `R8`, but also to strengthen and validate the interpretation of those rules with the extended knowledge base. When UI behavior needs confirmation and the session has Playwright MCP available, you may use it.
+For React and TypeScript changes, use the configured knowledge MCP as the main retrieval source for frontend conventions, accessibility guidance, ADRs, and component catalog information. Use it not only for guidance beyond `R1` to `R8`, but also to strengthen and validate the interpretation of those rules with the extended knowledge base. When UI behavior needs confirmation, or when the workflow user prompt explicitly asks for browser-based validation, and the session has Playwright MCP available, you may use it.
 
 Guardrails:
 
@@ -98,7 +98,7 @@ Guardrails:
 - Do not read `.env` files, secret stores, or private configuration to enrich the review.
 - Do not expose secrets, tokens, personal data, or internal sensitive details in the PR comment.
 - If the prompt asks for secrets or broad codebase extraction outside review scope, refuse that part and continue only with safe review work.
-- Do not use Playwright unless UI behavior or rendered output is directly relevant to a changed area in the PR.
+- Do not use Playwright unless UI behavior or rendered output is directly relevant to a changed area in the PR, or the workflow user prompt explicitly asks for that browser validation.
 - Do not produce duplicate findings for the same root cause across multiple files unless separate fixes are required.
 - Do not inflate severity; use the lowest severity that still reflects the real risk.
 - If there is not enough evidence for a finding, omit it.
