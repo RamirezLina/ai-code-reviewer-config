@@ -5,22 +5,39 @@
     ".github/copilot-instructions.md"
   ],
   "mcp": {
+    "knowledge": {
+      "type": "local",
+      "command": [
+        "python",
+        "-u",
+        "mcp/rag/server.py"
+      ],
+      "enabled": true
+    },
     "playwright": {
       "type": "local",
       "command": [
         "npx",
         "-y",
-        "@playwright/mcp@latest"
+        "@playwright/mcp@latest",
+        "--browser",
+        "chrome",
+        "--headless",
+        "--no-sandbox",
+        "--allowed-origins",
+        "127.0.0.1:3000;localhost:3000"
       ],
       "enabled": true
     }
   },
   "permission": {
+    "knowledge_*": "deny",
     "playwright_*": "deny"
   },
   "agent": {
     "react-reviewer": {
       "permission": {
+        "knowledge_*": "allow",
         "playwright_*": "allow"
       }
     }

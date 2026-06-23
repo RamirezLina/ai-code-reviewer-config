@@ -4,6 +4,7 @@ import { getUser, type User } from './services/api'
 
 export function App() {
   const [user, setUser] = useState<User | null>(null)
+  console.log(`getUser(${user})`); //Tdodo recordar borrar
 
   useEffect(() => {
     let active = true

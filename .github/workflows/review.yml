@@ -24,7 +24,9 @@ on:
 
 jobs:
   review:
-    runs-on: ubuntu-latest #TODO MODIFICAR  POR SELF RUNNER HOST
+    runs-on:
+      - self-hosted
+      - linux
     permissions:
       id-token: write
       contents: read
@@ -50,11 +52,37 @@ jobs:
             core.setOutput("title", pr.title);
 
       - name: Checkout PR code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr.outputs.head_sha }}
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: sandbox/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Configure local RAG paths
+        shell: bash
+        run: |
+          echo "RAG_SOURCE_DIR=${GITHUB_WORKSPACE}/sandbox/knowledge" >> "$GITHUB_ENV"
+          echo "RAG_INDEX_DIR=${HOME}/.cache/ai-code-reviewer-config/rag-index" >> "$GITHUB_ENV"
+          echo "UV_CACHE_DIR=${HOME}/.cache/uv" >> "$GITHUB_ENV"
+          mkdir -p "${HOME}/.cache/ai-code-reviewer-config/rag-index"
+          uv venv .venv
+          echo "VIRTUAL_ENV=${GITHUB_WORKSPACE}/.venv" >> "$GITHUB_ENV"
+          echo "${GITHUB_WORKSPACE}/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Validate requested agent
         shell: bash
@@ -64,6 +92,34 @@ jobs:
             echo "Requested agent '${{ inputs.agent }}' does not exist at $agent_file" >&2
             exit 1
           fi
+
+      - name: Install sandbox dependencies
+        shell: bash
+        run: npm ci
+        working-directory: sandbox
+
+      - name: Install RAG dependencies
+        shell: bash
+        run: |
+          uv pip install -r mcp/rag/requirements.txt
+
+      - name: Build or reuse knowledge index
+        shell: bash
+        run: |
+          python mcp/rag/index_knowledge.py \
+            --source-dir "$RAG_SOURCE_DIR" \
+            --index-dir "$RAG_INDEX_DIR"
+
+      - name: Install Playwright browser for MCP
+        shell: bash
+        run: npx -y @playwright/mcp@latest install-browser chrome-for-testing
+
+      - name: Start sandbox app for Playwright MCP
+        shell: bash
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 3000 > ../sandbox-dev.log 2>&1 &
+          npx -y wait-on@latest http://127.0.0.1:3000
+        working-directory: sandbox
 
       - name: Create PR diff
         run: |
@@ -86,7 +142,11 @@ jobs:
           Reglas operativas:
           - Usa `pr-diff.patch` y `pr-diff-stat.txt` como fuente principal.
           - Ignora cambios fuera de `sandbox/`.
-          - Devuelve solo el comentario final en Markdown, sin firma de herramienta, sin branding y sin texto adicional fuera del comentario.
+          - No menciones ni resumas cambios fuera de `sandbox/`, incluso si el PR incluye workflow, agentes, RAG, ADR o README.
+          - Usa el MCP de conocimiento para sustentar o ampliar la evaluacion de `R1` a `R8`, ADRs, accesibilidad y reutilizacion de componentes cuando aplique.
+          - Si necesitas validar comportamiento visual, o si la instruccion adicional del usuario pide validacion en navegador de forma explicita, la app del sandbox esta disponible en `http://127.0.0.1:3000` y el MCP de Playwright queda habilitado por `opencode.json`.
+          - En `## Hallazgos`, si existen findings, presentalos en una tabla Markdown compacta con columnas `Archivo`, `Severidad`, `Problema`, `Riesgo` y `Solucion sugerida`.
+          - Devuelve solo el comentario final en Markdown, sin firma de herramienta, sin branding, sin pensamientos, sin trazas de herramientas, sin etiquetas XML y sin texto adicional fuera del comentario.
           EOF
 
       - name: Generate review comment
@@ -101,6 +161,36 @@ jobs:
             --model "opencode-go/deepseek-v4-flash" \
             --dir "." \
             "$PROMPT" > review-comment.md
+
+      - name: Sanitize review comment
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("review-comment.md")
+          text = path.read_text(encoding="utf-8").strip()
+
+          start = text.find("## Resumen de revision")
+          if start != -1:
+              text = text[start:]
+
+          lines = []
+          skip_block = False
+          for line in text.splitlines():
+              stripped = line.strip()
+              if stripped == "<system-reminder>":
+                  skip_block = True
+                  continue
+              if skip_block and stripped == "</system-reminder>":
+                  skip_block = False
+                  continue
+              if not skip_block:
+                  lines.append(line)
+
+          cleaned = "\n".join(lines).strip()
+          path.write_text(cleaned + "\n", encoding="utf-8")
+          PY
 
       - name: Publish review comment to requested PR
         uses: actions/github-script@v7
