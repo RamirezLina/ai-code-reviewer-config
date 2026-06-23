@@ -142,8 +142,10 @@ jobs:
           Reglas operativas:
           - Usa `pr-diff.patch` y `pr-diff-stat.txt` como fuente principal.
           - Ignora cambios fuera de `sandbox/`.
+          - No menciones ni resumas cambios fuera de `sandbox/`, incluso si el PR incluye workflow, agentes, RAG, ADR o README.
           - Usa el MCP de conocimiento para sustentar o ampliar la evaluacion de `R1` a `R8`, ADRs, accesibilidad y reutilizacion de componentes cuando aplique.
           - Si necesitas validar comportamiento visual, o si la instruccion adicional del usuario pide validacion en navegador de forma explicita, la app del sandbox esta disponible en `http://127.0.0.1:3000` y el MCP de Playwright queda habilitado por `opencode.json`.
+          - Si identificas correcciones positivas dentro de `sandbox/`, reportalas en una seccion `## Correcciones positivas` con una tabla compacta de columnas `Archivo`, `Descripcion de la correccion` y `Lineamiento que cumple ahora`.
           - Devuelve solo el comentario final en Markdown, sin firma de herramienta, sin branding y sin texto adicional fuera del comentario.
           EOF
 
