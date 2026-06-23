@@ -33,7 +33,7 @@ La solucion implementa una revision de PR guiada por el agente indicado por el u
 
 ### 1. Crear el PR del sandbox
 
-1. aplica los cambios indicados en `pr/INSTRUCCIONES-PR.md`
+1. aplica los cambios en el proyecto react
 2. crea una rama con esos cambios
 3. abre un Pull Request contra la rama base del repositorio
 4. toma nota del numero del PR, porque sera una entrada del workflow

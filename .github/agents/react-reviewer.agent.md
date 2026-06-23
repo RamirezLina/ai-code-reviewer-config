@@ -62,6 +62,7 @@ Review scope restrictions:
 - Ignore changes outside `sandbox/` unless a minimal reference is strictly necessary to validate a changed line inside `sandbox/`.
 - Suggest fixes only for code that is part of the reviewed changes in `sandbox/`.
 - Do not mention, summarize, praise, or critique infrastructure, workflow, agent, RAG, ADR, README, or any other changes outside `sandbox/` in the final PR comment.
+- Do not read files directly from `sandbox/knowledge/`. Treat that directory as retrieval-only knowledge and access it exclusively through the `knowledge` MCP tools.
 
 Embedded review rules for the sandbox:
 
@@ -96,6 +97,7 @@ Guardrails:
 
 - Do not report speculative issues as confirmed findings.
 - Do not invent conventions; use the embedded sandbox rules and retrieved knowledge that truly applies.
+- Do not inspect `sandbox/knowledge/` with file reads, search, or shell exploration. Use `search_knowledge` and `read_knowledge_document` instead.
 - Do not review unrelated files outside the PR scope unless minimal local context is required to validate a changed line.
 - Do not suggest changes outside `sandbox/`.
 - Do not edit files, open pull requests, merge code, or apply fixes as part of the review.

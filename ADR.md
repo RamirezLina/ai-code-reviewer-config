@@ -4,7 +4,7 @@
 
 Se requiere revisar Pull Requests del frontend React desde GitHub Actions con un agente especializado, ejecutado desde un workflow manual donde el usuario pueda iniciar la revision, indicar el agente a utilizar y agregar instrucciones complementarias para la corrida. Adicionalmente, la salida debe publicarse como comentario en el PR revisado.
 
-El cliente plantea el uso de un self-hosted runner porque percibe que en los runners efimeros “el agente no queda con memoria”. En la practica, lo que no persiste entre ejecuciones no es la memoria del modelo, sino los artefactos locales que soportan la recuperacion de conocimiento. Si el workflow corriera siempre en runners efimeros, seria necesario rehacer el proceso de chunking, vectorizacion e indexacion en cada revision, aumentando tiempo de ejecucion, trabajo repetido y costo operativo.
+El cliente plantea el uso de un self-hosted runner porque percibe que en los runners efimeros “el agente no queda con memoria”. En la practica, lo que no persiste entre ejecuciones no es la memoria del modelo, sino los artefactos locales que soportan la recuperacion de conocimiento. Si el workflow corriera siempre en runners efimeros (como los GitHub-hosted runners), seria necesario rehacer el proceso de chunking, vectorizacion e indexacion en cada revision, aumentando tiempo de ejecucion, trabajo repetido y costo operativo.
 
 Si bien GitHub Enterprise ofrece alternativas como GitHub Copilot code review, en esta solucion se selecciona un agentic workflow manual con `workflow_dispatch`, seleccion explicita del agente habilitado y control sobre el harness de ejecucion.
 
@@ -36,11 +36,13 @@ Si bien GitHub Enterprise ofrece alternativas como GitHub Copilot code review, e
 
 8. Se requieren dos runtimes en el runner: Node.js para el sandbox, Playwright MCP y OpenCode; Python para el indexador, retrieval y servidor MCP del RAG. Playwright se mantiene disponible por si el agente necesita validar UI o si el usuario lo solicita explicitamente.
 
-9. La implementacion agentic workflow corre sobre un workflow de GitHub Actions con `workflow_dispatch`. No se usa GitHub Copilot code review ni un cloud agent administrado por GitHub; el pipeline prepara contexto, habilita MCP, ejecuta el agente en el self-hosted runner y publica su resultado en el PR.
+9. La implementacion agentic workflow corre sobre un workflow de GitHub Actions con `workflow_dispatch`, el pipeline prepara contexto, habilita MCP, ejecuta el agente en el self-hosted runner y publica su resultado en el PR. No se usa GitHub Copilot code review (producto de GitHub especializado en revisiones de código). En cualquier alternativa basada en modelos, el costo principal sigue estando en el consumo de tokens o AI credits. Adicionalmente, si la orquestacion se ejecutara sobre GitHub-hosted runners, tambien habria consumo de minutos de GitHub Actions; al usar self-hosted runner ese costo no desaparece, pero se traslada a la infraestructura operada por el cliente y evita sumar minutos de runner hospedado por GitHub.
 
 10. En esta version no se define una `skill` adicional para el reviewer. El flujo de revision es estable y siempre sigue los mismos pasos base, por lo que no era necesario agregar otra capa de instrucciones ni obligar al agente a leer archivos adicionales. Si en el futuro se requieren distintos formatos de comentario o criterios de revision segun la rama destino del PR, podria evaluarse una separacion por skills para no cargar contexto que no aplique a cada corrida.
 
 11. El modelo actual se selecciona dentro de las opciones disponibles de OpenCode Go con foco en costo y disponibilidad operativa para esta implementacion. Como evolucion, se recomienda evaluar modelos con mayor rigurosidad en code review, como familias equivalentes a GPT-5 para codigo o Claude Sonnet, cuando el balance costo-calidad justifique una revision mas profunda.
+
+12. Si la ejecucion migrara de OpenCode a GitHub Copilot, la mayor parte de la orquestacion actual se conservaria: `workflow_dispatch`, self-hosted runner, construccion o reutilizacion del indice RAG, arranque del sandbox, uso de MCP y publicacion del comentario en el PR. El cambio principal estaria en el harness de ejecucion: el paso `opencode-ai run` seria reemplazado por la invocacion del agente definido en `.github/agents/react-reviewer.agent.md`, manteniendo `AGENTS.md` y `.github/copilot-instructions.md` como politica estable. En una aproximacion nativa, GitHub o Copilot resolverian directamente la ejecucion del agente; en una aproximacion por CLI, el workflow seguiria invocando una herramienta de linea de comandos, pero ya orientada a Copilot en lugar de OpenCode.
 
 ## Mapeo a Copilot Enterprise
 
@@ -51,4 +53,17 @@ Si bien GitHub Enterprise ofrece alternativas como GitHub Copilot code review, e
 
 ## Plan de optimizacion de creditos
 
-Pendiente.
+En plataformas como Copilot y otras ofertas de IA, además del costo por tokens generados por la respuesta final, tambien se consideran los tokens de entrada y, cuando aplique, los tokens cacheados o reenviados al modelo. Por eso, incluir toda la base de lineamientos en cada prompt de revision incrementaría el volumen de entrada incluso para PR pequeños.
+
+La optimizacion principal de esta solucion es usar RAG por MCP para recuperar solo el contexto necesario. En lugar de pasar completos los ADR, guias extendidas, catalogo de componentes y checklists de accesibilidad en cada corrida, el agente consulta bajo demanda un subconjunto alineado con el diff revisado. Esto reduce tokens de entrada, evita ruido en la ventana de contexto y mantiene el foco en los lineamientos realmente relevantes para el cambio.
+
+Como criterio adicional de optimizacion, el modelo debe elegirse segun stack, complejidad del codebase y profundidad esperada del review. Un revisor React sobre una aplicacion pequeña puede operar con modelos de menor costo si mantienen suficiente precision; para revisiones mas rigurosas o codebases mas complejos conviene evaluar modelos con mejor desempeño en code review, aun con mayor costo unitario, siempre comparando costo total contra calidad de hallazgos.
+
+Como estimacion cualitativa por ejecucion, los componentes de costo quedan asi:
+
+- costo fijo bajo: instrucciones estables del agente, reglas `R1` a `R8` y prompt operativo del workflow
+- costo variable medio: diff del PR y contexto adicional solicitado por el usuario
+- costo variable controlado por RAG: resultados recuperados desde `knowledge` en lugar de inyectar toda `sandbox/knowledge/`
+- costo opcional adicional: uso de Playwright MCP cuando se solicita validacion visual o de comportamiento
+
+En una implementacion futura completamente soportada por Copilot Enterprise, este mismo criterio seguiria aplicando: reducir contexto fijo, recuperar solo lo necesario, reutilizar cache o indice local cuando sea posible y enrutar cada reviewer al modelo con mejor balance costo-calidad para su stack.
