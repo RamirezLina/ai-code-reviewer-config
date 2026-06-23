@@ -44,7 +44,14 @@ La solucion esta pensada para ejecutarse desde la pestana `Actions` del reposito
 
 Requisitos previos:
 
-- un self-hosted runner Linux registrado para este repositorio
+- un self-hosted runner Linux registrado para este repositorio. Antes de instalarlo localmente, se debe entrar a `Settings > Actions > Runners > New self-hosted runner` en GitHub, seleccionar `Linux`, y seguir las indicaciones y comandos que GitHub presenta para ese repositorio. En esta implementacion se configuro localmente sobre Ubuntu en WSL siguiendo estos pasos:
+  1. instalar utilidades base como `curl`, `tar`, `git` y `unzip`
+  2. crear una carpeta del runner dentro del filesystem Linux de WSL, por ejemplo `~/actions-runner`, evitando rutas montadas como `/mnt/c/...`
+  3. descargar y extraer el paquete del runner desde `Settings > Actions > Runners > New self-hosted runner`
+  4. ejecutar `./config.sh --url <repo-url> --token <token>` y aceptar el `runner group` por defecto
+  5. iniciar el runner con `./run.sh`
+  6. verificar en GitHub que el runner aparezca como `Online` o `Idle`
+  7. mantener el runner iniciado para que GitHub Actions pueda asignarle el job; si `./run.sh` no esta activo, el workflow quedara esperando un runner disponible
 - `OPENCODE_API_KEY` configurado en `Settings > Secrets and variables > Actions`
 - acceso del runner a internet para instalar dependencias de Node, Python y Playwright
 
