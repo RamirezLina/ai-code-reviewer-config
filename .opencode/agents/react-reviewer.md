@@ -103,21 +103,18 @@ Return concise Markdown as a pull request comment using exactly this structure:
 
 ## Hallazgos
 
-For each finding, use one bullet and expose these fields clearly:
+If there are findings, present them in a compact Markdown table with exactly these columns:
 
-- Severidad: Alta, Media o Baja.
-- Archivo: ruta y linea si aplica.
-- Problema: que incumplimiento o defecto se observa.
-- Riesgo: por que importa o que efecto puede causar.
-- Solucion sugerida: cambio concreto recomendado.
+| Archivo | Severidad | Problema | Riesgo | Solucion sugerida |
+| --- | --- | --- | --- | --- |
 
-Example shape:
+Rules for this table:
 
-- Severidad: Alta.
-  Archivo: `sandbox/src/example.tsx:10`
-  Problema: ...
-  Riesgo: ...
-  Solucion sugerida: ...
+- One row per finding.
+- `Archivo` must include the file path and line when applicable.
+- `Severidad` must be `Alta`, `Media`, or `Baja`.
+- Keep each cell concise but specific.
+- Do not merge multiple unrelated findings into one row.
 
 If there are no relevant findings, say that no critical issues were found.
 
