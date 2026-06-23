@@ -5,6 +5,15 @@
     ".github/copilot-instructions.md"
   ],
   "mcp": {
+    "knowledge": {
+      "type": "local",
+      "command": [
+        "python",
+        "-u",
+        "mcp/rag/server.py"
+      ],
+      "enabled": true
+    },
     "playwright": {
       "type": "local",
       "command": [
@@ -18,11 +27,13 @@
     }
   },
   "permission": {
+    "knowledge_*": "deny",
     "playwright_*": "deny"
   },
   "agent": {
     "react-reviewer": {
       "permission": {
+        "knowledge_*": "allow",
         "playwright_*": "allow"
       }
     }
