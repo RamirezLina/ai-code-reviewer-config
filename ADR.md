@@ -36,9 +36,11 @@ Si bien GitHub Enterprise ofrece alternativas como GitHub Copilot code review, e
 
 8. Se requieren dos runtimes en el runner: Node.js para el sandbox, Playwright MCP y OpenCode; Python para el indexador, retrieval y servidor MCP del RAG. Playwright se mantiene disponible por si el agente necesita validar UI o si el usuario lo solicita explicitamente.
 
-9. En esta version no se define una `skill` adicional para el reviewer. El flujo de revision es estable y siempre sigue los mismos pasos base, por lo que no era necesario agregar otra capa de instrucciones ni obligar al agente a leer archivos adicionales. Si en el futuro se requieren distintos formatos de comentario o criterios de revision segun la rama destino del PR, podria evaluarse una separacion por skills para no cargar contexto que no aplique a cada corrida.
+9. La implementacion agentic workflow corre sobre un workflow de GitHub Actions con `workflow_dispatch`. No se usa GitHub Copilot code review ni un cloud agent administrado por GitHub; el pipeline prepara contexto, habilita MCP, ejecuta el agente en el self-hosted runner y publica su resultado en el PR.
 
-10. El modelo actual se selecciona dentro de las opciones disponibles de OpenCode Go con foco en costo y disponibilidad operativa para esta implementacion. Como evolucion, se recomienda evaluar modelos con mayor rigurosidad en code review, como familias equivalentes a GPT-5 para codigo o Claude Sonnet, cuando el balance costo-calidad justifique una revision mas profunda.
+10. En esta version no se define una `skill` adicional para el reviewer. El flujo de revision es estable y siempre sigue los mismos pasos base, por lo que no era necesario agregar otra capa de instrucciones ni obligar al agente a leer archivos adicionales. Si en el futuro se requieren distintos formatos de comentario o criterios de revision segun la rama destino del PR, podria evaluarse una separacion por skills para no cargar contexto que no aplique a cada corrida.
+
+11. El modelo actual se selecciona dentro de las opciones disponibles de OpenCode Go con foco en costo y disponibilidad operativa para esta implementacion. Como evolucion, se recomienda evaluar modelos con mayor rigurosidad en code review, como familias equivalentes a GPT-5 para codigo o Claude Sonnet, cuando el balance costo-calidad justifique una revision mas profunda.
 
 ## Mapeo a Copilot Enterprise
 
