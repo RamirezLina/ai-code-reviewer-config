@@ -1,0 +1,6 @@
+{
+  "chunk_size": 1200,
+  "chunk_overlap": 150,
+  "default_top_k": 5,
+  "max_excerpt_chars": 700
+}
