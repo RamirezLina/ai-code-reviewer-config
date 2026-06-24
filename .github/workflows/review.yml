@@ -65,25 +65,6 @@ jobs:
           cache: npm
           cache-dependency-path: sandbox/package-lock.json
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Configure local RAG paths
-        shell: bash
-        run: |
-          echo "RAG_SOURCE_DIR=${GITHUB_WORKSPACE}/sandbox/knowledge" >> "$GITHUB_ENV"
-          echo "RAG_INDEX_DIR=${HOME}/.cache/ai-code-reviewer-config/rag-index" >> "$GITHUB_ENV"
-          echo "UV_CACHE_DIR=${HOME}/.cache/uv" >> "$GITHUB_ENV"
-          mkdir -p "${HOME}/.cache/ai-code-reviewer-config/rag-index"
-          uv venv .venv
-          echo "VIRTUAL_ENV=${GITHUB_WORKSPACE}/.venv" >> "$GITHUB_ENV"
-          echo "${GITHUB_WORKSPACE}/.venv/bin" >> "$GITHUB_PATH"
-
       - name: Validate requested agent
         shell: bash
         run: |
@@ -97,18 +78,6 @@ jobs:
         shell: bash
         run: npm ci
         working-directory: sandbox
-
-      - name: Install RAG dependencies
-        shell: bash
-        run: |
-          uv pip install -r mcp/rag/requirements.txt
-
-      - name: Build or reuse knowledge index
-        shell: bash
-        run: |
-          python mcp/rag/index_knowledge.py \
-            --source-dir "$RAG_SOURCE_DIR" \
-            --index-dir "$RAG_INDEX_DIR"
 
       - name: Install Playwright browser for MCP
         shell: bash
@@ -129,6 +98,7 @@ jobs:
       - name: Build review prompt
         shell: bash
         run: |
+          KNOWLEDGE_FILES=$(find sandbox/knowledge -type f -name '*.md' | sort)
           cat <<'EOF' > review-prompt.md
           Revisa unicamente los cambios del Pull Request #${{ inputs.pr_number }} dentro de `sandbox/`.
 
@@ -143,11 +113,17 @@ jobs:
           - Usa `pr-diff.patch` y `pr-diff-stat.txt` como fuente principal.
           - Ignora cambios fuera de `sandbox/`.
           - No menciones ni resumas cambios fuera de `sandbox/`, incluso si el PR incluye workflow, agentes, RAG, ADR o README.
-          - Usa el MCP de conocimiento para sustentar o ampliar la evaluacion de `R1` a `R8`, ADRs, accesibilidad y reutilizacion de componentes cuando aplique.
+          - Usa `sandbox/knowledge/` como fuente de lineamientos extendidos para sustentar o ampliar la evaluacion de `R1` a `R8`, ADRs, accesibilidad y reutilizacion de componentes cuando aplique.
           - Si necesitas validar comportamiento visual, o si la instruccion adicional del usuario pide validacion en navegador de forma explicita, la app del sandbox esta disponible en `http://127.0.0.1:3000` y el MCP de Playwright queda habilitado por `opencode.json`.
           - En `## Hallazgos`, si existen findings, presentalos en una tabla Markdown compacta con columnas `Archivo`, `Severidad`, `Problema`, `Riesgo` y `Solucion sugerida`.
           - Devuelve solo el comentario final en Markdown, sin firma de herramienta, sin branding, sin pensamientos, sin trazas de herramientas, sin etiquetas XML y sin texto adicional fuera del comentario.
           EOF
+          printf '\nLineamientos extendidos de sandbox/knowledge/:\n' >> review-prompt.md
+          for file in $KNOWLEDGE_FILES; do
+            printf '\n--- %s ---\n' "$file" >> review-prompt.md
+            cat "$file" >> review-prompt.md
+            printf '\n' >> review-prompt.md
+          done
 
       - name: Generate review comment
         id: review
