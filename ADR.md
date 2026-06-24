@@ -57,6 +57,17 @@ En plataformas como Copilot y otras ofertas de IA, además del costo por tokens 
 
 La optimizacion principal de esta solucion es usar RAG por MCP para recuperar solo el contexto necesario. En lugar de pasar completos los ADR, guias extendidas, catalogo de componentes y checklists de accesibilidad en cada corrida, el agente consulta bajo demanda un subconjunto alineado con el diff revisado. Esto reduce tokens de entrada, evita ruido en la ventana de contexto y mantiene el foco en los lineamientos realmente relevantes para el cambio.
 
+Como validacion puntual, se realizo una prueba A/B sobre el mismo PR de la prueba tecnica usando el modelo `opencode-go/deepseek-v4-pro`: una corrida con RAG y otra sin RAG, inyectando todos los lineamientos desde `sandbox/knowledge/`. Los resultados observados fueron:
+
+| Metrica | Con RAG | Sin RAG | Diferencia |
+| --- | ---: | ---: | ---: |
+| Input tokens | 92.676 | 125.871 | +33.195 |
+| Output tokens | 6.026 | 11.273 | +5.247 |
+| Total tokens | 98.702 | 137.144 | +38.442 |
+| Costo aproximado | $0.0512 | $0.0775 | +$0.0263 |
+
+Esta es una unica medicion y no debe usarse para inferir conclusiones concluyentes sobre la ventaja del uso de RAG. Sin embargo, en esta prueba concreta si se observa el comportamiento esperado: el escenario sin RAG consumio mas tokens de entrada, mas tokens totales y mayor costo, porque obligo a enviar al modelo todos los lineamientos en lugar de recuperar solo el contexto relevante.
+
 Como criterio adicional de optimizacion, el modelo debe elegirse segun stack, complejidad del codebase y profundidad esperada del review. Un revisor React sobre una aplicacion pequeña puede operar con modelos de menor costo si mantienen suficiente precision; para revisiones mas rigurosas o codebases mas complejos conviene evaluar modelos con mejor desempeño en code review, aun con mayor costo unitario, siempre comparando costo total contra calidad de hallazgos.
 
 Como estimacion cualitativa por ejecucion, los componentes de costo quedan asi:
@@ -66,4 +77,3 @@ Como estimacion cualitativa por ejecucion, los componentes de costo quedan asi:
 - costo variable controlado por RAG: resultados recuperados desde `knowledge` en lugar de inyectar toda `sandbox/knowledge/`
 - costo opcional adicional: uso de Playwright MCP cuando se solicita validacion visual o de comportamiento
 
-En una implementacion futura completamente soportada por Copilot Enterprise, este mismo criterio seguiria aplicando: reducir contexto fijo, recuperar solo lo necesario, reutilizar cache o indice local cuando sea posible y enrutar cada reviewer al modelo con mejor balance costo-calidad para su stack.
