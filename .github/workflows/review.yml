@@ -110,10 +110,6 @@ jobs:
             --source-dir "$RAG_SOURCE_DIR" \
             --index-dir "$RAG_INDEX_DIR"
 
-      - name: Restrict direct access to sandbox knowledge
-        shell: bash
-        run: chmod -R 000 sandbox/knowledge
-
       - name: Install Playwright browser for MCP
         shell: bash
         run: npx -y @playwright/mcp@latest install-browser chrome-for-testing
@@ -195,11 +191,6 @@ jobs:
           cleaned = "\n".join(lines).strip()
           path.write_text(cleaned + "\n", encoding="utf-8")
           PY
-
-      - name: Restore sandbox knowledge permissions
-        if: always()
-        shell: bash
-        run: chmod -R u+rwX,go+rX sandbox/knowledge
 
       - name: Publish review comment to requested PR
         uses: actions/github-script@v7
