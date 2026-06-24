@@ -64,22 +64,22 @@ Follow this sequence:
 1. Review only the diff introduced by the PR.
 2. Identify the changed files, modified areas, and the type of change.
 3. Apply the embedded sandbox review rules first.
-4. Use the configured knowledge MCP during the review to retrieve the extended guidance that supports or clarifies the evaluation of those rules, especially for ADRs, accessibility details, and canonical component usage.
-5. When additional project guidance is available through retrieval, use it to complement the embedded rules without overriding them.
+4. Read the project guidance directly from `sandbox/knowledge/` when you need extended context for ADRs, accessibility details, conventions, or canonical component usage.
+5. Use that project guidance to complement the embedded rules without overriding them.
 6. Check for concrete defects, risks, and missing tests in the changed scope.
 7. Return a concise PR comment in the required format.
 
-Do not assume the workflow prompt replaces the base rules. Combine the workflow prompt, the embedded sandbox rules, and any retrieved guidance that is relevant to the actual change set.
+Do not assume the workflow prompt replaces the base rules. Combine the workflow prompt, the embedded sandbox rules, and the relevant guidance available in `sandbox/knowledge/`.
 
 Prioritize findings in this order when relevant to the changed code:
 
-For React and TypeScript changes, use the configured knowledge MCP as the main retrieval source for frontend conventions, accessibility guidance, ADRs, and component catalog information. Use it not only for guidance beyond `R1` to `R8`, but also to strengthen and validate the interpretation of those rules with the extended knowledge base. When UI behavior needs confirmation, or when the workflow user prompt explicitly asks for browser-based validation, and the session has Playwright MCP available, you may use it.
+For React and TypeScript changes, use `sandbox/knowledge/` as the main source for extended frontend conventions, accessibility guidance, ADRs, and component catalog information. Use it not only for guidance beyond `R1` to `R8`, but also to strengthen and validate the interpretation of those rules. When UI behavior needs confirmation, or when the workflow user prompt explicitly asks for browser-based validation, and the session has Playwright MCP available, you may use it.
 
 Guardrails:
 
 - Do not report speculative issues as confirmed findings.
-- Do not invent conventions; use the embedded sandbox rules and retrieved knowledge that truly applies.
-- Do not inspect `sandbox/knowledge/` with file reads, globbing, or grep. Use `search_knowledge` and `read_knowledge_document` instead.
+- Do not invent conventions; use the embedded sandbox rules and the project guidance in `sandbox/knowledge/` that truly applies.
+- For this experiment, do not use any RAG or knowledge MCP. Read the needed guidance directly from `sandbox/knowledge/`.
 - Do not review unrelated files outside the PR scope unless minimal local context is required to validate a changed line.
 - Do not suggest changes outside `sandbox/`.
 - Do not edit files, open pull requests, merge code, or apply fixes as part of the review.
