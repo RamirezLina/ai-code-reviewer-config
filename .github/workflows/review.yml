@@ -162,7 +162,7 @@ jobs:
           PROMPT=$(cat review-prompt.md)
           npx -y opencode-ai@latest run \
             --agent "${{ inputs.agent }}" \
-            --model "opencode-go/deepseek-v4-flash" \
+            --model "opencode-go/deepseek-v4-pro" \
             --dir "." \
             "$PROMPT" > review-comment.md
 
