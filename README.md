@@ -119,7 +119,8 @@ Decisiones principales:
 
 ## Video
 
-Pendiente. Agregar aqui el enlace al video con una corrida real del pipeline.
+LINK DE VIDEO DEL WORKFLOW EN EJECUCIÓN: https://drive.google.com/file/d/1sOYxS_9DAdKZajWgvzjGtM8i4-JlwMc_/view?usp=sharing
+
 
 ## Documentos complementarios
 
