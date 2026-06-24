@@ -1,0 +1,9 @@
+.badge {
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+}
+
+.inline {
+  opacity: 0.6;
+}
